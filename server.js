@@ -17,18 +17,29 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Helper function to format response text with extra spacing after paragraphs
+// Helper function to format response text with extra spacing after paragraphs
 function formatResponse(text) {
-  // Remove unnecessary markdown formatting
-  let formattedText = text
-    .replace(/\*\*|\*/g, "")        // Remove bold/italic markers
-    .replace(/`{3,}/g, "")          // Remove code block markers
-    .replace(/```python/g, "")      // Remove Python-specific markers
-    .replace(/#+\s/g, "")           // Remove heading tags
-    .replace(/\n{2,}/g, "\n\n")     // Ensure paragraphs are separated by two line breaks
-    .replace(/\n/g, "\n\n");        // Convert single line breaks to double
+  // Split the text into paragraphs
+  let paragraphs = text.split('\n\n').map(p => p.trim());
 
-  return formattedText;
+  // Format each paragraph
+  const formattedParagraphs = paragraphs.map(paragraph => {
+    if (paragraph.startsWith('|')) {
+      // Format tables (assuming tables are written with pipes)
+      return `<pre>${paragraph}</pre>`; // Use <pre> to preserve whitespace in tables
+    } else if (paragraph.startsWith('Use cases:')) {
+      // Bold 'Use cases' and format the list
+      return `<strong>${paragraph.split(':')[0]}:</strong> ${paragraph.split(':')[1].replace(/\n/g, '<br>')}`;
+    } else {
+      // Return regular paragraphs with spacing
+      return `<p>${paragraph}</p>`;
+    }
+  });
+
+  // Join the formatted paragraphs back into a single string
+  return formattedParagraphs.join('\n\n');
 }
+
 
 app.post("/api/gemini", async (req, res) => {
   const { query } = req.body;
