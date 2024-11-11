@@ -3,6 +3,8 @@ const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SpeechClient } = require('@google-cloud/speech');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,8 +25,15 @@ app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for large payload
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY); // API Key from environment variable
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// Decode and parse the JSON credentials for Google Speech-to-Text from environment variable
-const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
+// Load credentials from the JSON file specified in the environment variable
+let credentials;
+try {
+    const credentialsPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+} catch (error) {
+    console.error("Error loading Google credentials:", error);
+    process.exit(1); // Exit if credentials can't be loaded
+}
 
 // Initialize the SpeechClient with credentials
 const client = new SpeechClient({ credentials });
