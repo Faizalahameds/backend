@@ -3,8 +3,6 @@ const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SpeechClient } = require('@google-cloud/speech');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,21 +19,19 @@ app.options('*', cors(corsOptions)); // Handle preflight requests
 app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for large payloads
 
-// Initialize Google clients
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY); // API Key from environment variable
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// Initialize Google Generative AI with API key
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY);
 
-// Load credentials from the JSON file specified in the environment variable
+// Decode the base64-encoded credentials for Google Speech-to-Text
 let credentials;
 try {
-    const credentialsPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+    credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
 } catch (error) {
-    console.error("Error loading Google credentials:", error);
-    process.exit(1); // Exit if credentials can't be loaded
+    console.error("Error decoding Google credentials:", error);
+    process.exit(1); // Exit if credentials can't be decoded
 }
 
-// Initialize the SpeechClient with credentials
+// Initialize the SpeechClient with decoded credentials
 const client = new SpeechClient({ credentials });
 
 // Helper function to format response text
@@ -54,16 +50,17 @@ app.post("/api/gemini", async (req, res) => {
     const { query } = req.body;
 
     try {
+        const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(query);
         const formattedResponse = formatResponse(result.response.text());
         res.json({ answer: formattedResponse });
     } catch (error) {
-        console.error("Error communicating with Gemini API", error);
-        res.status(500).json({ error: "Failed to fetch response" });
+        console.error("Error communicating with Gemini API:", error);
+        res.status(500).json({ error: "Failed to fetch response from Gemini API" });
     }
 });
 
-// New endpoint for audio transcription and sending transcript to Gemini
+// Endpoint for audio transcription and sending transcript to Gemini
 app.post("/transcribe", async (req, res) => {
     const audioBytes = req.body.audio; // Expecting base64 audio data
 
@@ -93,12 +90,12 @@ app.post("/transcribe", async (req, res) => {
                 body: JSON.stringify({ query: transcriptText }),
             });
 
-            const geminiData = await geminiResponse.json();
-
             if (geminiResponse.ok) {
+                const geminiData = await geminiResponse.json();
                 res.json({ transcript: transcriptText, geminiAnswer: geminiData.answer });
             } else {
-                res.status(500).json({ error: "Error from Gemini API", geminiError: geminiData.error });
+                const geminiError = await geminiResponse.json();
+                res.status(500).json({ error: "Error from Gemini API", geminiError: geminiError.error });
             }
         } else {
             res.json({ transcript: 'No transcription available' });
@@ -110,5 +107,5 @@ app.post("/transcribe", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log (`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
