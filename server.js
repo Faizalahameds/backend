@@ -12,7 +12,7 @@ const BASE_API_URL = process.env.BASE_API_URL; // Set this in Render environment
 const corsOptions = {
     origin: ["https://faizalahameds.github.io", "http://localhost:3000"],
     methods: "GET,POST",
-    allowedHeaders: ["Content-Type"]
+    allowedHeaders: ["Content-Type"],
     credentials: true
 };
 
