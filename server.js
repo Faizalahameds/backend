@@ -6,32 +6,31 @@ const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const BASE_API_URL = process.env.BASE_API_URL; // Set this in Render environment variables
 
 // CORS options
 const corsOptions = {
-    origin: ["https://faizalahameds.github.io", "http://localhost:3000"], // Replace with your GitHub Pages URL
+    origin: ["https://faizalahameds.github.io", "http://localhost:3000"],
     methods: "GET,POST",
     allowedHeaders: ["Content-Type"]
 };
 
 // Middleware
-app.options('*', cors(corsOptions)); // Handle preflight requests
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
-app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for large payloads
+app.use(bodyParser.json({ limit: '50mb' }));
 
-// Initialize Google Generative AI with API key
+// Initialize Google clients
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENAI_API_KEY);
 
-// Decode the base64-encoded credentials for Google Speech-to-Text
 let credentials;
 try {
     credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
 } catch (error) {
     console.error("Error decoding Google credentials:", error);
-    process.exit(1); // Exit if credentials can't be decoded
+    process.exit(1);
 }
 
-// Initialize the SpeechClient with decoded credentials
 const client = new SpeechClient({ credentials });
 
 // Helper function to format response text
@@ -62,10 +61,9 @@ app.post("/api/gemini", async (req, res) => {
 
 // Endpoint for audio transcription and sending transcript to Gemini
 app.post("/transcribe", async (req, res) => {
-    const audioBytes = req.body.audio; // Expecting base64 audio data
+    const audioBytes = req.body.audio;
 
     try {
-        // Perform transcription using Google Speech-to-Text
         const [response] = await client.recognize({
             config: {
                 encoding: 'WEBM_OPUS',
@@ -77,12 +75,11 @@ app.post("/transcribe", async (req, res) => {
             },
         });
 
-        // Check if transcription is available
         if (response.results && response.results.length > 0) {
             const transcriptText = response.results[0].alternatives[0].transcript;
 
-            // Send the transcript to the Gemini API for further response generation
-            const geminiResponse = await fetch("http://localhost:5000/api/gemini", {
+            // Use BASE_API_URL instead of localhost
+            const geminiResponse = await fetch(`${BASE_API_URL}/api/gemini`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
