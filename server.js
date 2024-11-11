@@ -29,7 +29,6 @@ const { SpeechClient } = require('@google-cloud/speech');
 const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
 
 // Initialize the SpeechClient with these credentials
-const speechClient = new SpeechClient({ credentials });
 
 
 // Helper function to format response text
