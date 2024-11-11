@@ -3,6 +3,8 @@ const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SpeechClient } = require('@google-cloud/speech');
 const bodyParser = require('body-parser');
+const speech = require('@google-cloud/speech');
+const client = new speech.SpeechClient(); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +30,7 @@ const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDEN
 
 // Initialize the SpeechClient with credentials
 const speechClient = new SpeechClient({ credentials });
+
 
 // Helper function to format response text
 function formatResponse(text) {
