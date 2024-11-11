@@ -29,7 +29,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
 
 // Initialize the SpeechClient with credentials
-const speechClient = new SpeechClient({ credentials });
+
 
 
 // Helper function to format response text
