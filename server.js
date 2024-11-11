@@ -13,6 +13,7 @@ const corsOptions = {
     origin: ["https://faizalahameds.github.io", "http://localhost:3000"],
     methods: "GET,POST",
     allowedHeaders: ["Content-Type"]
+    credentials: true
 };
 
 // Middleware
