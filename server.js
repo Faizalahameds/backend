@@ -23,9 +23,14 @@ app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for large payload
 const API_KEY = "AIzaSyDafp_ZEl13nMCofkQE-vPr0x8BIo_98q0";
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-const speechClient = new SpeechClient({
-    keyFilename: 'config.json' // Path to your service account key
-});
+const { SpeechClient } = require('@google-cloud/speech');
+
+// Decode and parse the JSON credentials from the environment variable
+const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
+
+// Initialize the SpeechClient with these credentials
+const speechClient = new SpeechClient({ credentials });
+
 
 // Helper function to format response text
 function formatResponse(text) {
