@@ -9,12 +9,13 @@ const PORT = process.env.PORT || 5000;
 
 // CORS options
 const corsOptions = {
-    origin: ["https://faizalahameds.github.io/audiogpt/", "http://localhost:3000"],// Replace with your GitHub Pages URL
+    origin: ["https://faizalahameds.github.io", "http://localhost:3000"],// Replace with your GitHub Pages URL
     methods: "GET,POST",
     allowedHeaders: ["Content-Type"]
 };
 
 // Middleware
+app.options('*', cors(corsOptions)); // Handle preflight requests
 app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for large payloads
 
