@@ -3,8 +3,6 @@ const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SpeechClient } = require('@google-cloud/speech');
 const bodyParser = require('body-parser');
-const speech = require('@google-cloud/speech');
-const client = new speech.SpeechClient(); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,8 +27,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const credentials = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('utf8'));
 
 // Initialize the SpeechClient with credentials
-
-
+const client = new SpeechClient({ credentials });
 
 // Helper function to format response text
 function formatResponse(text) {
@@ -63,7 +60,7 @@ app.post("/transcribe", async (req, res) => {
 
     try {
         // Perform transcription using Google Speech-to-Text
-        const [response] = await speechClient.recognize({
+        const [response] = await client.recognize({
             config: {
                 encoding: 'WEBM_OPUS',
                 sampleRateHertz: 48000,
@@ -99,10 +96,10 @@ app.post("/transcribe", async (req, res) => {
         }
     } catch (error) {
         console.error("Error with Google Speech-to-Text or Gemini API:", error);
-        res.status(500).json({ error: "Transcription and response generation failed" });
+        res.status(500).json({ error: "Transcription and response generation failed", details: error.message });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log (`Server running on http://localhost:${PORT}`);
 });
